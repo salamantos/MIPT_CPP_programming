@@ -29,7 +29,7 @@ vector<int> find_prefix_func( string& str )
 		prefix_func[i] = j;
 	}
 
-	return prefix_func;
+	return prefix_func; 
 }
 
 int main()
