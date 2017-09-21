@@ -39,9 +39,8 @@ int main()
 	cin >> pattern >> str;
 	size_t p = pattern.length();
 	size_t s = str.length();
-	vector<int> prefix_func = find_prefix_func( str ); ////
+	vector<int> prefix_func = find_prefix_func( str );
 	str = pattern + '#' + str;
-	//vector<int> prefix_func = find_prefix_func( str ); ////
 	for (size_t i = 0; i < p + s + 1; i++) {
 		if (prefix_func[i] == p) {
 			cout << i - 2 * p << '\n';
