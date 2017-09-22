@@ -28,7 +28,7 @@ void recur_pi( set<char>& used_letters, const string& str, const vector<int>& pi
 	used_letters.insert( str[i] );
 	if (i > 0) {
 		recur_pi( used_letters, str, pi, pi[i] );
-	}
+	} 
 	return;
 }
 
