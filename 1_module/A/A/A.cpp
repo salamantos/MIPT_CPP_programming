@@ -33,18 +33,34 @@ vector<int> find_prefix_func( const string& str )
 	return prefix_func; 
 }
 
-int main()
-{
+inline int move_temp_str( const string& pattern, const vector<int>& prefix_func, const char symb, int pref ) {
+	// pref - Предыдущее значение префикс-функции
+	while (pref > 0 && symb != pattern[pref]) {
+		pref = prefix_func[pref - 1];
+	}
+	if (symb == pattern[pref]) ++pref;
+	int prefix_func_val = pref;
+
+	return prefix_func_val;
+}
+
+int main() {
+	std::ios::sync_with_stdio( false );
 	string pattern;
 	string str;
 	cin >> pattern >> str;
 	size_t p = pattern.length();
 	size_t s = str.length();
-	vector<int> prefix_func = find_prefix_func( str );
-	str = pattern + '#' + str;
-	for (size_t i = 0; i < p + s + 1; i++) {
-		if (prefix_func[i] == p) {
-			cout << i - 2 * p << '\n';
+	pattern = pattern + '#';
+	vector<int> prefix_func = find_prefix_func( pattern );
+
+	int prefix_func_val = 0; // значение от # равно 0
+	int pos = 0;
+	for (size_t pos = 0; pos < s; pos++) {
+		char symb = str[pos];
+		prefix_func_val = move_temp_str( pattern, prefix_func, symb, prefix_func_val );
+		if (prefix_func_val == p) {
+			cout << pos - p + 1 << '\n';
 		}
 	}
 
