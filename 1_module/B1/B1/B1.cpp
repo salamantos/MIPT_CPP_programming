@@ -2,14 +2,14 @@
 
 #include <iostream>
 #include <algorithm>
-#include <set>
+#include <unordered_set>
 #include <string>
 #include <vector>
 
 using std::cout;
 using std::cin;
 using std::string;
-using std::set;
+using std::unordered_set;
 using std::vector;
 using std::min;
 
@@ -22,7 +22,7 @@ using std::min;
 //	}
 //}
 
-void recur_pi( set<char>& used_letters, const string& str, const vector<int>& pi, const int i )
+void recur_pi( unordered_set<char>& used_letters, const string& str, const vector<int>& pi, const int i )
 {
 	if (i < 0) return;
 	used_letters.insert( str[i] );
@@ -42,7 +42,7 @@ string find_string( const vector<int>& pi )
 		if (pi[i] != 0) {
 			str[i] = str[pi[i] - 1];
 		} else {
-			set<char> used_letters;
+			unordered_set<char> used_letters;
 
 			for (int j = pi[i - 1]; j > 0; j = pi[j-1]) {
 				used_letters.insert( str[j] );
