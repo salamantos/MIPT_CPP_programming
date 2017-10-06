@@ -37,33 +37,23 @@ string find_string( const vector<int>& pi )
 	size_t n = pi.size();
 	string str;
 	str.resize( n );
-	for (size_t i = 0; i < n; i++) {
+	str[0] = 'a';
+	for (size_t i = 1; i < n; i++) {
 		if (pi[i] != 0) {
 			str[i] = str[pi[i] - 1];
 		} else {
-			if (i == 0) {
-				str[0] = 'a';
-				continue;
-			}
 			set<char> used_letters;
 
 			for (int j = pi[i - 1]; j > 0; j = pi[j-1]) {
 				used_letters.insert( str[j] );
 			}
-			used_letters.insert( str[0] );
-
-			//recur_pi( used_letters, str, pi, i - 1 );
-			for (char lett = 'a'; lett < 'z'; lett++) {
+			
+			for (char lett = 'b'; lett < 'z'; lett++) {
 				if (!used_letters.count( lett )) {
 					str[i] = lett;
 					break;
 				}
 			}
-			/*char minimum = str[pi[i - 1]] + 1;
-			for (size_t j = 0; j < i - 1; j++) {
-				minimum = min( (int) minimum, str[recur_pi( pi, i - 1, j )-1] + 1 );
-			}
-			str[i] = minimum;*/
 		}
 	}
 
