@@ -49,7 +49,7 @@ string find_string( const vector<int>& pi )
 			}
 			
 			for (char lett = 'b'; lett < 'z'; lett++) {
-				if (!used_letters.count( lett )) {
+				if (used_letters.count( lett ) == 0) {
 					str[i] = lett;
 					break;
 				}
