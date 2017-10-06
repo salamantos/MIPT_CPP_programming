@@ -16,7 +16,7 @@ using std::cin;
 using std::string;
 using std::vector;
 
-vector<int> find_prefix_func( string& str )
+vector<int> find_prefix_func( const string& str )
 {
 	size_t len = str.length();
 	vector<int> prefix_func( len );
