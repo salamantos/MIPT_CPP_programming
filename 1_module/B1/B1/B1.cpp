@@ -13,28 +13,9 @@ using std::unordered_set;
 using std::vector;
 using std::min;
 
-//int recur_pi( const vector<int>& pi, const int x, int recur_depth )
-//{
-//	if (recur_depth <= 0) {
-//		return pi[x - 1];
-//	} else {
-//		return recur_pi( pi, x, recur_depth - 1 );
-//	}
-//}
-
-void recur_pi( unordered_set<char>& used_letters, const string& str, const vector<int>& pi, const int i )
-{
-	if (i < 0) return;
-	used_letters.insert( str[i] );
-	if (i > 0) {
-		recur_pi( used_letters, str, pi, pi[i] );
-	} 
-	return;
-}
-
 string find_string( const vector<int>& pi )
 {
-	size_t n = pi.size();
+	const size_t n = pi.size();
 	string str;
 	str.resize( n );
 	str[0] = 'a';
