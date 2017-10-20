@@ -29,19 +29,9 @@ vector<int> Z_to_prefix( const vector<int>& z )
 	return p;
 }
 
-void recur_pi( unordered_set<char>& used_letters, const string& str, const vector<int>& pi, const int i )
-{
-	if (i < 0) return;
-	used_letters.insert( str[i] );
-	if (i > 0) {
-		recur_pi( used_letters, str, pi, pi[i] );
-	} 
-	return;
-}
-
 string find_string( const vector<int>& pi )
 {
-	size_t n = pi.size();
+	const size_t n = pi.size();
 	string str;
 	str.resize( n );
 	str[0] = 'a';
