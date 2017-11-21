@@ -8,7 +8,36 @@ using std::vector;
 
 #define alphabet_cardinality 150 // Мощность алфавита
 
-vector<int> build_suffix_array( const string &s ) {
+void transition( int& h, const size_t len, vector<int>& perm_new, vector<int>& perm,
+                        int& count_classes, vector<int>& classes, vector<int>& classes_new ) {
+    for (int i = 0; i < len; ++i) {
+        perm_new[i] = perm[i] - (1 << h);
+        if (perm_new[i] < 0) perm_new[i] += len;
+    }
+    vector<size_t> counter( count_classes );
+    for (int i = 0; i < len; ++i) {
+        ++counter[classes[perm_new[i]]];
+    }
+    for (int i = 1; i < count_classes; ++i) {
+        counter[i] += counter[i - 1];
+    }
+    for (int i = len - 1; i >= 0; --i) {
+        perm[--counter[classes[perm_new[i]]]] = perm_new[i];
+    }
+    classes_new[perm[0]] = 0;
+    count_classes = 1;
+    for (int i = 1; i < len; ++i) {
+        int mid1 = (perm[i] + (1 << h)) % len;
+        int mid2 = (perm[i - 1] + (1 << h)) % len;
+        if (classes[perm[i]] != classes[perm[i - 1]] || classes[mid1] != classes[mid2])
+            ++count_classes;
+        classes_new[perm[i]] = count_classes - 1;
+    }
+    perm_new = perm;
+    classes = classes_new;
+}
+
+vector<int> build_suffix_array( const string& s ) {
     size_t len = s.length();
     vector<size_t> counter( alphabet_cardinality ); // Для стабильной сортировки подсчетом
     vector<int> perm( len ); // Массив перестановок в отсортированном виде
@@ -38,34 +67,15 @@ vector<int> build_suffix_array( const string &s ) {
     vector<int> perm_new( len ); // Массив перестановок в отсортированном виде
     vector<int> classes_new( len ); // Массив классов эквивалентности равных символов
     for (int h = 0; (1 << h) < len; ++h) {
-        for (int i = 0; i < len; ++i) {
-            perm_new[i] = perm[i] - (1 << h);
-            if (perm_new[i] < 0) perm_new[i] += len;
-        }
-        vector<size_t> counter( count_classes );
-        for (int i = 0; i < len; ++i)
-            ++counter[classes[perm_new[i]]];
-        for (int i = 1; i < count_classes; ++i)
-            counter[i] += counter[i - 1];
-        for (int i = len - 1; i >= 0; --i)
-            perm[--counter[classes[perm_new[i]]]] = perm_new[i];
-        classes_new[perm[0]] = 0;
-        count_classes = 1;
-        for (int i = 1; i < len; ++i) {
-            int mid1 = (perm[i] + (1 << h)) % len, mid2 = (perm[i - 1] + (1 << h)) % len;
-            if (classes[perm[i]] != classes[perm[i - 1]] || classes[mid1] != classes[mid2])
-                ++count_classes;
-            classes_new[perm[i]] = count_classes - 1;
-        }
-        perm_new = perm;
-        classes = classes_new;
+        transition( h, len, perm_new, perm, count_classes, classes, classes_new );
     }
 
     return perm;
 }
 
-vector<int> the_algorithm_of_Kasai_Arimura_Arikawa_Lee_Park( const vector<int> &suffix_array, const string &s ) {
-    size_t len = s.length();
+// the_algorithm_of_Kasai_Arimura_Arikawa_Lee_Park
+vector<int> calcLCP( const vector<int>& suffix_array, const string& s ) {
+    const size_t len = s.length();
     vector<int> lcp( len );
     vector<int> inverted_lcp( len );
     for (int i = 0; i < len; ++i) {
@@ -73,13 +83,17 @@ vector<int> the_algorithm_of_Kasai_Arimura_Arikawa_Lee_Park( const vector<int> &
     }
     int k = 0;
     for (int i = 0; i < len; ++i) {
-        if (k > 0) --k;
+        if (k > 0) {
+            --k;
+        }
         if (inverted_lcp[i] == len - 1) {
             lcp[len - 1] = -1;
             k = 0;
         } else {
             int j = suffix_array[inverted_lcp[i] + 1];
-            while (i + k < len and j + k < len and s[i + k] == s[j + k]) ++k;
+            while (i + k < len and j + k < len and s[i + k] == s[j + k]) {
+                ++k;
+            }
             lcp[inverted_lcp[i]] = k;
         }
     }
@@ -93,7 +107,7 @@ int main() {
 
     vector<int> suffix_array = build_suffix_array( s );
 
-    vector<int> lcp = the_algorithm_of_Kasai_Arimura_Arikawa_Lee_Park( suffix_array, s );
+    vector<int> lcp = calcLCP( suffix_array, s );
 
     size_t len = s.length() - 1;
     int sum = 0;
@@ -103,7 +117,7 @@ int main() {
     for (size_t i = 0; i < len; ++i) {
         sum -= (lcp[i]);
     }
-    cout<<sum;
+    cout << sum;
 
     return 0;
 }
