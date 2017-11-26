@@ -7,8 +7,9 @@
 using std::vector;
 using std::cin;
 using std::cout;
+using std::copy;
 using std::atan2;
-using std::reverse;
+using std::rotate;
 #define pi M_PI
 
 struct Point {
@@ -60,6 +61,10 @@ find_Minkowski_addition( const vector<Point>& V, const vector<Point>& W, const s
             V_min_index = k;
         }
     }
+    vector<Point> local_V( V );
+    rotate( local_V.begin(), local_V.begin() + V_min_index, local_V.end());
+
+
     Point W_min = W[0];
     size_t W_min_index = 0;
     for (size_t k = 1; k < m; ++k) {
@@ -68,32 +73,25 @@ find_Minkowski_addition( const vector<Point>& V, const vector<Point>& W, const s
             W_min_index = k;
         }
     }
+    vector<Point> local_W( W );
+    rotate( local_W.begin(), local_W.begin() + W_min_index, local_W.end());
 
-    auto i = static_cast<int>(V_min_index), j = static_cast<int>(W_min_index);
-    int V_is_traversed = 0, W_is_traversed = 0;
+    int i = 0, j = 0;
     vector<Point> res;
-    while ((V_is_traversed != 2) and (W_is_traversed != 2)) {
-        Point temp_point = V[i % n] + W[j % m];
+    local_V.push_back( local_V[0] );
+    local_V.push_back( local_V[1] );
+    local_W.push_back( local_W[0] );
+    local_W.push_back( local_W[1] );
+    while (i <= n and j <= m) {
+        Point temp_point = local_V[i] + local_W[j];
         res.push_back( temp_point );
-        if (angle( V[i % n], V[(i + 1) % n] ) < angle( W[j % m], W[(j + 1) % m] )) {
+        if (angle( local_V[i], local_V[i + 1] ) < angle( local_W[j], local_W[j + 1] )) {
             ++i;
-            if (i % n == (V_min_index + 1) % n) {
-                V_is_traversed += 1;
-            }
-        } else if (angle( V[i % n], V[(i + 1) % n] ) > angle( W[j % m], W[(j + 1) % m] )) {
+        } else if (angle( local_V[i], local_V[i + 1] ) > angle( local_W[j], local_W[j + 1] )) {
             ++j;
-            if (j % m == (W_min_index + 1) % m) {
-                W_is_traversed += 1;
-            }
         } else {
             ++i;
-            if (i % n == (V_min_index + 1) % n) {
-                V_is_traversed += 1;
-            }
             ++j;
-            if (j % m == (W_min_index + 1) % m) {
-                W_is_traversed += 1;
-            }
         }
     }
     return res;
@@ -103,47 +101,24 @@ int sign( double val ) {
     return (val > 0 ? 1 : (val < 0 ? -1 : 0));
 }
 
-bool check_0_0( const vector<Point>& Minkowski_add ) {
-    for (int i = 0; i < Minkowski_add.size(); ++i) {
-        auto Pi = Minkowski_add[i];
-        auto Pi1 = Minkowski_add[i + 1];
-        if (Pi._x * Pi1._y - Pi._y * Pi1._x < 0) {
+bool check_0_0( const vector<Point>& Minkowski_add_get ) {
+    vector<Point> Minkowski_add( Minkowski_add_get );
+    Minkowski_add.push_back( Minkowski_add[0] );
+    Minkowski_add.push_back( Minkowski_add[1] );
+    for (int i = 0; i < Minkowski_add.size() - 2; ++i) {
+        double product = Minkowski_add[i]._x * Minkowski_add[i + 1]._y - Minkowski_add[i + 1]._x * Minkowski_add[i]._y;
+        if (product < 0) {
             return false;
-        }
-        if (Pi._x * Pi1._y - Pi._y * Pi1._x == 0) {
-            if (Pi._x != Pi1._x or Pi._y != Pi1._y) {
-                if (sign( Pi._x ) == sign( Pi1._x ) == 0) {
-                    if (sign( Pi._y ) == 0 or sign( Pi1._y ) == 0) {
-                        return true;
-                    } else if (sign( Pi._y ) != sign( Pi1._y )) {
-                        return true;
-                    } else if (sign( Pi._y ) == sign( Pi1._y )) {
-                        return false;
-                    }
-                } else {
-                    if (sign( Pi._x ) == 0) {
-                        if (sign( Pi._y ) == 0) {
-                            return true;
-                        }
-                        return false;
-                    }
-                    if (sign( Pi1._x ) == 0) {
-                        if (sign( Pi1._y ) == 0) {
-                            return true;
-                        }
-                        return false;
-                    }
-                    if (sign( Pi._x ) != sign( Pi1._x )){
-                        if (sign( Pi._y ) != sign( Pi1._y )) {
-                            return true;
-                        }
-                        if (sign( Pi._y ) == sign( Pi1._y )) {
-                            return false;
-                        }
-                    }
+        } else if (product == 0) {
 
-                }
+            if (Minkowski_add[i]._x == Minkowski_add[i + 1]._x and
+                Minkowski_add[i]._y == Minkowski_add[i + 1]._y) {
+                continue;
             }
+            return (Minkowski_add[i]._y * Minkowski_add[i + 1]._y < 0) or
+                   ((Minkowski_add[i]._y == 0) and
+                    (Minkowski_add[i + 1]._y == 0) and
+                    (Minkowski_add[i]._x * Minkowski_add[i + 1]._x <= 0));
         }
     }
     return true;
