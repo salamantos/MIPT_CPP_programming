@@ -78,7 +78,7 @@ public:
     Hull( size_t n, vector<Vector> points ) : facesCount( 0 ), vertices( std::move( points )) {
         count_edges_usage.resize( n );
         for (size_t i = 0; i < n; i++) {
-            count_edges_usage[i] = vector<char>( n, 0 );
+            count_edges_usage[i] = vector<char>( n - i, 0 );
         }
     }
 
@@ -99,12 +99,16 @@ void Hull::add_face( int p1, int p2, int p3, int p4 ) {
         face.points[2] = face.points[1];
         face.points[1] = tmp;
     }
-    count_edges_usage[face.points[0]][face.points[1]]++;
-    count_edges_usage[face.points[0]][face.points[2]]++;
-    count_edges_usage[face.points[1]][face.points[0]]++;
-    count_edges_usage[face.points[1]][face.points[2]]++;
-    count_edges_usage[face.points[2]][face.points[0]]++;
-    count_edges_usage[face.points[2]][face.points[1]]++;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < i+1; ++j) {
+            if (i == j)continue;
+            if (face.points[i] <= face.points[j]) {
+                count_edges_usage[face.points[i]][face.points[j] - face.points[i]]++;
+            } else {
+                count_edges_usage[face.points[j]][face.points[i] - face.points[j]]++;
+            }
+        }
+    }
     faces.push_back( face );
     ++facesCount;
 }
@@ -120,25 +124,33 @@ void Hull::build() {
     for (int i = 4; i < vertices.size(); i++) {
         vector<pair<short, short>> upt_eu; // Ребра для обновления
         for (int j = 0; j < faces.size(); j++) {
-            Face f = faces[j];
-            Vector l = vertices[i] + vertices[f.points[0]] * (-1);
-            if (scalar_product( f.norm, l ) > 0) {
-                count_edges_usage[f.points[0]][f.points[1]]--;
-                count_edges_usage[f.points[0]][f.points[2]]--;
-                count_edges_usage[f.points[1]][f.points[0]]--;
-                count_edges_usage[f.points[1]][f.points[2]]--;
-                count_edges_usage[f.points[2]][f.points[0]]--;
-                count_edges_usage[f.points[2]][f.points[1]]--;
-                upt_eu.emplace_back( make_pair( f.points[0], f.points[1] ));
-                upt_eu.emplace_back( make_pair( f.points[1], f.points[2] ));
-                upt_eu.emplace_back( make_pair( f.points[2], f.points[0] ));
+            Face face = faces[j];
+            Vector l = vertices[i] + vertices[face.points[0]] * (-1);
+            if (scalar_product( face.norm, l ) > 0) {
+                for (int i = 0; i < 3; ++i) {
+                    for (int j = 0; j < i+1; ++j) {
+                        if (i == j)continue;
+                        if (face.points[i] <= face.points[j]) {
+                            count_edges_usage[face.points[i]][face.points[j] - face.points[i]]--;
+                        } else {
+                            count_edges_usage[face.points[j]][face.points[i] - face.points[j]]--;
+                        }
+                    }
+                }
+                upt_eu.emplace_back( make_pair( face.points[0], face.points[1] ));
+                upt_eu.emplace_back( make_pair( face.points[1], face.points[2] ));
+                upt_eu.emplace_back( make_pair( face.points[2], face.points[0] ));
                 faces[j--] = faces.back();
                 faces.resize( faces.size() - 1 );
                 --facesCount;
             }
         }
         for (auto edge : upt_eu) {
-            if (count_edges_usage[edge.first][edge.second] == 1) {
+            short first = edge.first, second = edge.second;
+            if (first > second) {
+                swap( first, second );
+            }
+            if (count_edges_usage[first][second-first] == 1) {
                 int k = 0;
                 while (k == i or k == edge.first or k == edge.second) {
                     ++k;
