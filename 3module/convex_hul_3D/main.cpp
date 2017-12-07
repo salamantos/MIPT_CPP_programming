@@ -7,42 +7,42 @@
 using namespace std;
 
 struct Vector {
-    int _x = 0;
-    int _y = 0;
-    int _z = 0;
+    int x = 0;
+    int y = 0;
+    int z = 0;
 
     Vector() = default;
 
-    Vector( int x, int y, int z ) : _x( x ), _y( y ), _z( z ) {}
+    Vector( int x_, int y_, int z_ ) : x( x_ ), y( y_ ), z( z_ ) {}
 };
 
 Vector cross_product( const Vector& u, const Vector& v ) {
-    int i = u._y * v._z - u._z * v._y;
-    int j = u._z * v._x - u._x * v._z;
-    int k = u._x * v._y - u._y * v._x;
+    int i = u.y * v.z - u.z * v.y;
+    int j = u.z * v.x - u.x * v.z;
+    int k = u.x * v.y - u.y * v.x;
     return {i, j, k};
 }
 
 int scalar_product( const Vector& v, const Vector& u ) {
-    return ((u)._x * (v)._x + (u)._y * (v)._y + (u)._z * (v)._z);
+    return ((u).x * (v).x + (u).y * (v).y + (u).z * (v).z);
 
 }
 
 Vector operator+( const Vector& u, const Vector& v ) {
-    return {u._x + v._x, u._y + v._y, u._z + v._z};
+    return {u.x + v.x, u.y + v.y, u.z + v.z};
 }
 
 Vector operator*( const Vector& u, const int s ) {
-    return {u._x * s, u._y * s, u._z * s};
+    return {u.x * s, u.y * s, u.z * s};
 }
 
-struct Face {
+struct Plane {
     Vector norm;
     short points[3] = {0, 0, 0};
 
-    Face() = default;
+    Plane() = default;
 
-    Face( int p1, int p2, int p3 ) {
+    Plane( int p1, int p2, int p3 ) {
         int t_1 = std::min( p1, std::min( p2, p3 ));
         int t_3 = std::max( p1, std::max( p2, p3 ));
         int t_2 = p1 + p2 + p3 - t_1 - t_3;
@@ -52,7 +52,7 @@ struct Face {
     }
 };
 
-static bool comparator( const Face& fst, const Face& snd ) {
+static bool comparator( const Plane& fst, const Plane& snd ) {
     if (fst.points[0] < snd.points[0]) {
         return true;
     } else if (fst.points[0] == snd.points[0] and fst.points[1] < snd.points[1]) {
@@ -66,14 +66,14 @@ static bool comparator( const Face& fst, const Face& snd ) {
 class Hull {
 private:
     int facesCount;
-    vector<Face> faces;
+    vector<Plane> faces;
     vector<Vector> vertices;
     vector<vector<char>> count_edges_usage; // 0/1/2 - нигде не используется/исп. в 1 грани/исп. в 2 гранях
 
 public:
     int get_faces_count() { return facesCount; }
 
-    vector<Face> get_faces() { return faces; }
+    vector<Plane> get_faces() { return faces; }
 
     Hull( size_t n, vector<Vector> points ) : facesCount( 0 ), vertices( std::move( points )) {
         count_edges_usage.resize( n );
@@ -84,11 +84,15 @@ public:
 
     void add_face( int p1, int p2, int p3, int p4 );
 
+    void add_faces();
+
+    void add_found_faces(const int i, const vector<pair<short, short>>& upt_eu);
+
     void build();
 };
 
 void Hull::add_face( int p1, int p2, int p3, int p4 ) {
-    Face face( p1, p2, p3 );
+    Plane face( p1, p2, p3 );
     Vector foo = vertices[face.points[1]] + vertices[face.points[0]] * (-1);
     Vector bar = vertices[face.points[2]] + vertices[face.points[0]] * (-1);
     Vector baz = vertices[p4] + vertices[face.points[0]] * (-1);
@@ -100,7 +104,7 @@ void Hull::add_face( int p1, int p2, int p3, int p4 ) {
         face.points[1] = tmp;
     }
     for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < i+1; ++j) {
+        for (int j = 0; j < i + 1; ++j) {
             if (i == j)continue;
             if (face.points[i] <= face.points[j]) {
                 count_edges_usage[face.points[i]][face.points[j] - face.points[i]]++;
@@ -113,7 +117,7 @@ void Hull::add_face( int p1, int p2, int p3, int p4 ) {
     ++facesCount;
 }
 
-void Hull::build() {
+void Hull::add_faces() {
     for (int i = 0; i < 4; i++) {
         for (int j = i + 1; j < 4; j++) {
             for (int k = j + 1; k < 4; k++) {
@@ -121,14 +125,35 @@ void Hull::build() {
             }
         }
     }
+}
+
+void Hull::add_found_faces(const int i, const vector<pair<short, short>>& upt_eu){
+    for (auto edge : upt_eu) {
+        short first = edge.first, second = edge.second;
+        if (first > second) {
+            swap( first, second );
+        }
+        if (count_edges_usage[first][second - first] == 1) {
+            int k = 0;
+            while (k == i or k == edge.first or k == edge.second) {
+                ++k;
+            }
+            add_face( edge.first, edge.second, i, k );
+        }
+    }
+}
+
+void Hull::build() {
+    add_faces();
+
     for (int i = 4; i < vertices.size(); i++) {
         vector<pair<short, short>> upt_eu; // Ребра для обновления
         for (int j = 0; j < faces.size(); j++) {
-            Face face = faces[j];
+            Plane face = faces[j];
             Vector l = vertices[i] + vertices[face.points[0]] * (-1);
             if (scalar_product( face.norm, l ) > 0) {
                 for (int i = 0; i < 3; ++i) {
-                    for (int j = 0; j < i+1; ++j) {
+                    for (int j = 0; j < i + 1; ++j) {
                         if (i == j)continue;
                         if (face.points[i] <= face.points[j]) {
                             count_edges_usage[face.points[i]][face.points[j] - face.points[i]]--;
@@ -145,19 +170,8 @@ void Hull::build() {
                 --facesCount;
             }
         }
-        for (auto edge : upt_eu) {
-            short first = edge.first, second = edge.second;
-            if (first > second) {
-                swap( first, second );
-            }
-            if (count_edges_usage[first][second-first] == 1) {
-                int k = 0;
-                while (k == i or k == edge.first or k == edge.second) {
-                    ++k;
-                }
-                add_face( edge.first, edge.second, i, k );
-            }
-        }
+
+        add_found_faces(i, upt_eu);
     }
     sort( faces.begin(), faces.end(), comparator );
 }
