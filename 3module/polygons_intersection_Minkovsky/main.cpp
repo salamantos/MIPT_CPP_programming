@@ -31,7 +31,7 @@ struct Point {
     }
 
     Point operator+( const Point& other ) const {
-        return Point( this->_x + other._x, this->_y + other._y );
+        return {this->_x + other._x, this->_y + other._y};
     }
 };
 
@@ -50,29 +50,37 @@ double angle( const Point& a, const Point& b ) {
     return temp >= 0 ? temp : temp + 2 * pi;
 }
 
-vector<Point>
-find_Minkowski_addition( const vector<Point>& V, const vector<Point>& W, const size_t n, const size_t m ) {
+void
+find_min_points( const vector<Point>& V, const vector<Point>& W, const size_t n, const size_t m, size_t& V_min_index,
+                 size_t& W_min_index ) {
     // Находим самую левую самую правую точку в каждом многоугольнике
     Point V_min = V[0];
-    size_t V_min_index = 0;
     for (size_t k = 1; k < n; ++k) {
         if (V[k] < V_min) {
             V_min = V[k];
             V_min_index = k;
         }
     }
-    vector<Point> local_V( V );
-    rotate( local_V.begin(), local_V.begin() + V_min_index, local_V.end());
-
 
     Point W_min = W[0];
-    size_t W_min_index = 0;
     for (size_t k = 1; k < m; ++k) {
         if (W[k] < W_min) {
             W_min = W[k];
             W_min_index = k;
         }
     }
+}
+
+vector<Point>
+find_Minkowski_addition( const vector<Point>& V, const vector<Point>& W, const size_t n, const size_t m ) {
+    size_t V_min_index = 0;
+    size_t W_min_index = 0;
+
+    find_min_points( V, W, n, m, V_min_index, W_min_index );
+
+    vector<Point> local_V( V );
+    rotate( local_V.begin(), local_V.begin() + V_min_index, local_V.end());
+
     vector<Point> local_W( W );
     rotate( local_W.begin(), local_W.begin() + W_min_index, local_W.end());
 
@@ -97,11 +105,7 @@ find_Minkowski_addition( const vector<Point>& V, const vector<Point>& W, const s
     return res;
 }
 
-int sign( double val ) {
-    return (val > 0 ? 1 : (val < 0 ? -1 : 0));
-}
-
-bool check_0_0( const vector<Point>& Minkowski_add_get ) {
+bool isCenterInside( const vector<Point>& Minkowski_add_get ) {
     vector<Point> Minkowski_add( Minkowski_add_get );
     Minkowski_add.push_back( Minkowski_add[0] );
     Minkowski_add.push_back( Minkowski_add[1] );
@@ -137,7 +141,7 @@ int main() {
 
     vector<Point> Minkowski_add = find_Minkowski_addition( V, W, n, m );
 
-    cout << (check_0_0( Minkowski_add ) ? "YES" : "NO");
+    cout << (isCenterInside( Minkowski_add ) ? "YES" : "NO");
 
     return 0;
 }
