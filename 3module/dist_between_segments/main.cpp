@@ -7,9 +7,11 @@
 #include <iostream>
 #include <iomanip>
 
-using namespace std;
+using std::cin;
+using std::cout;
+using std::setprecision;
 
-#define eps 0.0000000001
+#define eps 1e-9
 
 struct Point {
     double _x = 0, _y = 0, _z = 0;
@@ -43,72 +45,83 @@ double scalar_product( const Vector& v, const Vector& u ) {
 
 }
 
+double vector_product( const Vector& u, const Vector& v ) {
+    double u_norn = scalar_product( u, u );
+    double uXv = scalar_product( u, v );
+    double v_norm = scalar_product( v, v );
+    return u_norn * v_norm - uXv * uXv;
+}
+
+//void make_some_compares(){
+//
+//}
+
 double dist_between_segments( const Point& p1, const Point& p2, const Point& r1, const Point& r2 ) {
     Vector u( p2, p1 );
     Vector v( r2, r1 );
     Vector w( p1, r1 );
-    double uXu = scalar_product( u, u );
+    double u_norn = scalar_product( u, u );
     double uXv = scalar_product( u, v );
-    double vXv = scalar_product( v, v );
+    double v_norm = scalar_product( v, v );
     double uXw = scalar_product( u, w );
     double vXw = scalar_product( v, w );
-    double D = uXu * vXv - uXv * uXv; // vector product
+    double D = vector_product( u, v ); // vector product
     double s_c, t_c; // coefficients from 0 to 1, describing segments
-    double sN, tN; // Normalized s and t - coordinates in sOt
-    double sD = D; // s_c = sN / sD, default sD = D >= 0
-    double tD = D; // t_c = tN / tD, default tD = D >= 0
+    double s_normalised, t_normalised; // Normalized s and t - coordinates in sOt
+    double sD = D; // s_c = s_normalised / sD, default sD = D >= 0
+    double tD = D; // t_c = t_normalised / tD, default tD = D >= 0
 
     // compute the line parameters of the two closest points
     if (D < eps) { // the lines are almost parallel
-        sN = 0.0;         // force using point P0 on segment S1
+        s_normalised = 0.0;         // force using point P0 on segment S1
         sD = 1.0;         // to prevent possible division by 0.0 later
-        tN = vXw;
-        tD = vXv;
+        t_normalised = vXw;
+        tD = v_norm;
     } else {
         // get the closest points on the infinite lines
-        sN = (uXv * vXw - vXv * uXw);
-        tN = (uXu * vXw - uXv * uXw);
+        s_normalised = (uXv * vXw - v_norm * uXw);
+        t_normalised = (u_norn * vXw - uXv * uXw);
 
         // sc<0 => the s=0 edge is visible
-        if (sN <= 0.0) {
-            sN = 0.0;
-            tN = vXw;
-            tD = vXv;
-        } else if (sN >= sD) {
+        if (s_normalised <= 0.0) {
+            s_normalised = 0.0;
+            t_normalised = vXw;
+            tD = v_norm;
+        } else if (s_normalised >= sD) {
             // sc>1  => the s=1 edge is visible
-            sN = sD;
-            tN = vXw + uXv;
-            tD = vXv;
+            s_normalised = sD;
+            t_normalised = vXw + uXv;
+            tD = v_norm;
         }
     }
     // tc<0 => the t=0 edge is visible
-    if (tN <= 0.0) {
-        tN = 0.0;
+    if (t_normalised <= 0.0) {
+        t_normalised = 0.0;
 
         if (-uXw <= 0.0)
-            sN = 0.0;
-        else if (-uXw >= uXu)
-            sN = sD;
+            s_normalised = 0.0;
+        else if (-uXw >= u_norn)
+            s_normalised = sD;
         else {
-            sN = -uXw;
-            sD = uXu;
+            s_normalised = -uXw;
+            sD = u_norn;
         }
-    } else if (tN >= tD) {
+    } else if (t_normalised >= tD) {
         // tc > 1  => the t=1 edge is visible
-        tN = tD;
+        t_normalised = tD;
 
         if ((-uXw + uXv) <= 0.0)
-            sN = 0;
-        else if ((-uXw + uXv) >= uXu)
-            sN = sD;
+            s_normalised = 0;
+        else if ((-uXw + uXv) >= u_norn)
+            s_normalised = sD;
         else {
-            sN = (-uXw + uXv);
-            sD = uXu;
+            s_normalised = (-uXw + uXv);
+            sD = u_norn;
         }
     }
 
-    s_c = (abs( sN ) <= eps ? 0.0 : sN / sD); // s_c = sN / sD, default sD = D >= 0
-    t_c = (abs( tN ) <= eps ? 0.0 : tN / tD); // t_c = tN / tD, default tD = D >= 0
+    s_c = (abs( s_normalised ) <= eps ? 0.0 : s_normalised / sD); // s_c = s_normalised / sD, default sD = D >= 0
+    t_c = (abs( t_normalised ) <= eps ? 0.0 : t_normalised / tD); // t_c = t_normalised / tD, default tD = D >= 0
 
     // get the difference of the two closest points
     Vector dP = w + (u * s_c) + (v * t_c * (-1));  // =  S1(sc) - S2(tc)
@@ -118,10 +131,13 @@ double dist_between_segments( const Point& p1, const Point& p2, const Point& r1,
 
 int main() {
     Point p1, p2, r1, r2;
-    cin >> p1._x >> p1._y >> p1._z >> p2._x >> p2._y >> p2._z >> r1._x >> r1._y >> r1._z >> r2._x >> r2._y >> r2._z;
+    cin >> p1._x >> p1._y >> p1._z
+        >> p2._x >> p2._y >> p2._z
+        >> r1._x >> r1._y >> r1._z
+        >> r2._x >> r2._y >> r2._z;
 
     cout << std::fixed;
-    cout << setprecision(10);
+    cout << setprecision( 10 );
 
     cout << dist_between_segments( p1, p2, r1, r2 );
 
