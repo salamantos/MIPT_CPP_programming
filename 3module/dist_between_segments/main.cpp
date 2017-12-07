@@ -11,6 +11,7 @@ using std::cin;
 using std::cout;
 using std::setprecision;
 
+
 #define eps 1e-9
 
 struct Point {
@@ -120,8 +121,8 @@ double dist_between_segments( const Point& p1, const Point& p2, const Point& r1,
         }
     }
 
-    s_c = (abs( s_normalised ) <= eps ? 0.0 : s_normalised / sD); // s_c = s_normalised / sD, default sD = D >= 0
-    t_c = (abs( t_normalised ) <= eps ? 0.0 : t_normalised / tD); // t_c = t_normalised / tD, default tD = D >= 0
+    s_c = (std::abs( s_normalised ) <= eps ? 0.0 : s_normalised / sD); // s_c = s_normalised / sD, default sD = D >= 0
+    t_c = (std::abs( t_normalised ) <= eps ? 0.0 : t_normalised / tD); // t_c = t_normalised / tD, default tD = D >= 0
 
     // get the difference of the two closest points
     Vector dP = w + (u * s_c) + (v * t_c * (-1));  // =  S1(sc) - S2(tc)
