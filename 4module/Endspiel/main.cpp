@@ -26,21 +26,9 @@ struct Cell {
         return not(*this == other);
     }
 
-    bool operator<( const Cell& other ) const {
-        if (x < other.x) {
-            return true;
-        } else if (x > other.x) {
-            return false;
-        } else if (y < other.y) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+    bool operator<( const Cell& other ) const;
 
-    bool can_step( int stepX, int stepY ) {
-        return (x + stepX) >= 1 and (x + stepX) <= 8 and (y + stepY) >= 1 and (y + stepY) <= 8;
-    }
+    bool can_step( int stepX, int stepY );
 
     int get_hash() const {
         return x * 10 + y;
@@ -48,6 +36,22 @@ struct Cell {
 
     Cell step( int stepX, int stepY );
 };
+
+bool Cell::operator<( const Cell& other ) const {
+    if (x < other.x) {
+        return true;
+    } else if (x > other.x) {
+        return false;
+    } else if (y < other.y) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool Cell::can_step( int stepX, int stepY ) {
+    return (x + stepX) >= 1 and (x + stepX) <= 8 and (y + stepY) >= 1 and (y + stepY) <= 8;
+}
 
 Cell Cell::step( int stepX, int stepY ) {
     return Cell( x + stepX, y + stepY );
@@ -98,37 +102,41 @@ private:
     void add_black_kings( const Cell& queen, const Cell& Bking, std::queue<Board>& queueSituations,
                           int minStep );
 
-    bool is_check( const Cell& King, const Cell& Queen ) {
-        for (int i = 0; i < 8; ++i) {
-            Cell tempQueen = Queen;
+    bool is_check( const Cell& King, const Cell& Queen );
 
-            while (tempQueen.can_step( XStep[i], YStep[i] )) {
-                tempQueen = tempQueen.step( XStep[i], YStep[i] );
-
-                if (tempQueen != WhiteKing) {
-                    if (tempQueen == King) {
-                        return true;
-                    }
-                } else {
-                    break;
-                }
-            }
-        }
-        return false;
-    }
-
-    bool step_without_interceptions_with_WK( Cell BK, Cell WK, Cell WQ ) {
-        for (int i = 0; i < 8; ++i) {
-            if (BK.step( XStep[i], YStep[i] ) == WK) {
-                return false;
-            }
-        }
-        return true;
-    }
+    bool step_without_interceptions_with_WK( Cell BK, Cell WK, Cell WQ );
 
     const int XStep[8];
     const int YStep[8];
 };
+
+bool EndspielSolver::step_without_interceptions_with_WK( Cell BK, Cell WK, Cell WQ ) {
+    for (int i = 0; i < 8; ++i) {
+        if (BK.step( XStep[i], YStep[i] ) == WK) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool EndspielSolver::is_check( const Cell& King, const Cell& Queen ) {
+    for (int i = 0; i < 8; ++i) {
+        Cell tempQueen = Queen;
+
+        while (tempQueen.can_step( XStep[i], YStep[i] )) {
+            tempQueen = tempQueen.step( XStep[i], YStep[i] );
+
+            if (tempQueen != WhiteKing) {
+                if (tempQueen == King) {
+                    return true;
+                }
+            } else {
+                break;
+            }
+        }
+    }
+    return false;
+}
 
 void EndspielSolver::add_black_kings( const Cell& queen, const Cell& Bking,
                                       std::queue<Board>& queueSituations, int minStep ) {
